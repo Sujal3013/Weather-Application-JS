@@ -1,0 +1,21 @@
+.rain{
+    background-color: $background-color;
+    border-image: url("../../dist/img/rain.jpg");
+}
+.snow{
+    background-color: $background-color;
+    border-image: url("../../dist/img/snow.jpg");
+}
+.night{
+    background-color: $night-color;
+    border-image: url("../../dist/img/night.jpg");
+}
+.fog{
+    background-color: $fog-color;
+    border-image: url("../../dist/img/fog.jpg");
+}
+
+.clouds{
+    background-color: $background-color;
+    border-image: url("../../dist/img/clouds.jpg");
+}
