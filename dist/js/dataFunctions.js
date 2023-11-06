@@ -1,5 +1,4 @@
-const WEATHER_API_KEY='91af9f646f0def7b4a7d4c85e1d670ac';
-const FREE_API_KEY='414ddb5774b04eb69b254244230511';
+import {env} from '../../env.js'
 
 export const setLocationObject=(locationObj,coordsObj)=>{
     const {lat,lon,name,unit}=coordsObj;
@@ -19,8 +18,7 @@ export const getWeatherFromCoords=async(locationObj)=>{
     const lat=locationObj.getLat();
     const lon=locationObj.getLon();
     const units=locationObj.getUnit();
-    // const url=`https://api.openweathermap.org/data/3.0/onecall?lat=${lat}&lon=${lon}&exclude=minutely,hourly,alerts&units=${units}&appid=${WEATHER_API_KEY}`;
-    const url=`https://api.weatherapi.com/v1/forecast.json?key=${FREE_API_KEY}&q=${lat},${lon}&days=7&aqi=no&alerts=no`;
+    const url=`https://api.weatherapi.com/v1/forecast.json?key=${env.FREE_API_KEY}&q=${lat},${lon}&days=7&aqi=no&alerts=no`;
 
     try{
         const weatherStream=await fetch(url);
@@ -36,7 +34,7 @@ export const getWeatherFromCoords=async(locationObj)=>{
 export const getCoordsFromApi=async (entryText,units)=>{
     const regex=/^\d+$/g;
     const flag=regex.test(entryText)?"zip":"q";
-    const url=`https://api.openweathermap.org/data/2.5/weather?${flag}=${entryText}&units=${units}&appid=${WEATHER_API_KEY}`;
+    const url=`https://api.openweathermap.org/data/2.5/weather?${flag}=${entryText}&units=${units}&appid=${env.WEATHER_API_KEY}`;
     const encodeUrl=encodeURI(url);
     try{
         const dataStream=await fetch(encodeUrl);
