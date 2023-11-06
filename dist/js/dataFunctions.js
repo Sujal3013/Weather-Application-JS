@@ -19,7 +19,7 @@ export const getWeatherFromCoords=async(locationObj)=>{
     const lon=locationObj.getLon();
     const units=locationObj.getUnit();
     // const url=`https://api.openweathermap.org/data/3.0/onecall?lat=${lat}&lon=${lon}&exclude=minutely,hourly,alerts&units=${units}&appid=${WEATHER_API_KEY}`;
-    const url=`https://api.weatherapi.com/v1/forecast.json?key=${FREE_API_KEY}&q=${lat},${lon}&days=6&aqi=no&alerts=no`;
+    const url=`https://api.weatherapi.com/v1/forecast.json?key=${FREE_API_KEY}&q=${lat},${lon}&days=7&aqi=no&alerts=no`;
 
     try{
         const weatherStream=await fetch(url);

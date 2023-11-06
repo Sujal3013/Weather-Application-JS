@@ -2,6 +2,7 @@ import {
   addSpinner,
   displayError,
   displayApiError,
+  updateDisplay,
   updateScreenReaderConfirmation,
   setPlaceHolderText,
 } from "./domFuntions.js";
@@ -167,6 +168,6 @@ const submitNewLocation = async (event) => {
 const updateDataAndDisplay = async (locationObj) => {
   // console.log(locationObj);
   const weatherJson=await getWeatherFromCoords(locationObj);
-  console.log(weatherJson);
-  // if(weatherJson)updateDataAndDisplay(weatherJson,locationObj);
+  // console.log(weatherJson);
+  if(weatherJson)updateDisplay(weatherJson,locationObj);
 };

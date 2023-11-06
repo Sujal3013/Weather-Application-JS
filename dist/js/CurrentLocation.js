@@ -3,7 +3,7 @@ export default class CurrentLocation{
         this._name="Current Location";
         this._lat=null;
         this._lon=null;
-        this._unit="imperial";
+        this._unit="metric";
     }
 
     getName(){
@@ -32,6 +32,6 @@ export default class CurrentLocation{
     }
 
     toggleUnit(){
-        this._unit=this._unit==="imperial"?"metric":"imperial";
+        this._unit=this._unit==="metric"?"imperial":"metric";
     }
 }

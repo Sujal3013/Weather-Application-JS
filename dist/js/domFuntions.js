@@ -5,6 +5,8 @@ export const setPlaceHolderText = () => {
     : (input.placeholder = "City, State, Country or Zip Code");
 };
 
+const unitObj={unit:"imperial"};
+
 export const addSpinner = (element) => {
   animateButton(element);
   setTimeout(animateButton, 1000, element);
@@ -37,7 +39,23 @@ const toProperCase = (text) => {
 
 const updateWeatherLocationHeader = (message) => {
   const h1 = document.getElementById("currentForecast_location");
-  h1.textContent = message;
+  if (message.indexOf("Lat:") !== -1 && message.indexOf("Long:") !== -1) {
+    const msgArray = message.split(" ");
+    const mapArray = msgArray.map((msg) => {
+      return msg.replace(":", ": ");
+    });
+    const lat =
+      mapArray[0].indexOf("-") === -1
+        ? mapArray[0].slice(0, 10)
+        : mapArray[0].slice(0, 11);
+    const lon =
+      mapArray[0].indexOf("-") === -1
+        ? mapArray[1].slice(0, 10)
+        : mapArray[1].slice(0, 11);
+    h1.textContent=`${lat} • ${lon}`;
+  } else {
+    h1.textContent = message;
+  }
 };
 
 export const updateScreenReaderConfirmation = (message) => {
@@ -45,18 +63,33 @@ export const updateScreenReaderConfirmation = (message) => {
 };
 
 export const updateDisplay = (weatherJson, locationObj) => {
-  fadeDisplay();
-  clearDisplay();
-  const weatherClass = getWeatherClass(weatherJson.current.condition.code,current.is_day);
-  setBGImage(weatherClass);
-  const screenReaderWeather=buildScreenReaderWeather(weatherJson,locationObj);
-  updateScreenReaderConfirmation(screenReaderWeather);
-  updateWeatherLocationHeader(locationObj.getName());
-  // current conditions
-  const ccArray=createCurrentConditionsDivs(weatherJson,locationObj.getUnit());
-  // six day forecast
-  setFocusOnSearch();
-  fadeDisplay();
+  try {
+    fadeDisplay();
+    clearDisplay();
+    const weatherClass = getWeatherClass(
+      weatherJson.current.condition.code,
+      weatherJson.current.is_day
+    );
+    setBGImage(weatherClass);
+    const screenReaderWeather = buildScreenReaderWeather(
+      weatherJson,
+      locationObj
+    );
+    updateScreenReaderConfirmation(screenReaderWeather);
+    updateWeatherLocationHeader(locationObj.getName());
+    // current conditions
+    const ccArray = createCurrentConditionsDivs(
+      weatherJson,
+      locationObj.getUnit()
+    );
+    displayCurrentConditions(ccArray);
+    // six day forecast
+    displaySixDayForecast(weatherJson);
+    setFocusOnSearch();
+    fadeDisplay();
+  } catch (err) {
+    console.error(err);
+  }
 };
 
 const fadeDisplay = () => {
@@ -86,7 +119,7 @@ const deleteContents = (parentElement) => {
   }
 };
 
-const getWeatherClass = (icon,is_day) => {
+const getWeatherClass = (icon, is_day) => {
   const weatherLookup = {
     1000: "day",
     1003: "clouds",
@@ -135,35 +168,222 @@ const getWeatherClass = (icon,is_day) => {
     1282: "snow",
   };
   let weatherClass;
-  if (weatherLookup[icon]) {
+  if(is_day===1){
     weatherClass = weatherLookup[icon];
-  }else if(is_day==1){
-    weatherClass="day";
-  }else{
-    weatherClass="night";
+  }else {
+    weatherClass = "night";
   }
+
+  // if (weatherLookup[icon]) {
+  //   weatherClass = weatherLookup[icon];
+  // } else if (is_day === 1) {
+  //   weatherClass = "day";
+  // } else {
+  //   weatherClass = "night";
+  // }
   return weatherClass;
 };
 
-const setBGImage=(weatherClass)=>{
+const setBGImage = (weatherClass) => {
   document.documentElement.classList.add(weatherClass);
-  document.documentElement.classList.forEach(img=>{
-    if(img!=weatherClass)document.documentElement.classList.remove(img);
+  document.documentElement.classList.forEach((img) => {
+    if (img != weatherClass) document.documentElement.classList.remove(img);
   });
+};
+
+const unitSetup=(units)=>{
+  unitObj.unit=units;
 }
 
-const buildScreenReaderWeather=(weatherJson,locationObj)=>{
-  const location=locationObj.getName();
-  const unit=locationObj.getUnit();
-  const tempUnit=unit==="imperial"?"F":"C";
-  const temp=unit==="imperial"?weatherJson.current.temp_f:weatherJson.current.temp_f;
-  return `${weatherJson.current.condition.text} and ${Math.round(Number(temp))}°${tempUnit} in ${location}`;
-}
+const buildScreenReaderWeather = (weatherJson, locationObj) => {
+  const location = locationObj.getName();
+  const unit = unitSetup(locationObj.getUnit());
+  const tempUnit = unit === "imperial" ? "F" : "C";
+  const temp =
+    unit === "imperial"
+      ? weatherJson.current.temp_f
+      : weatherJson.current.temp_c;
+  return `${weatherJson.current.condition.text} and ${Math.round(
+    Number(temp)
+  )}°${tempUnit} in ${location}`;
+};
 
-const setFocusOnSearch=()=>{
+const setFocusOnSearch = () => {
   document.getElementById("searchBar_text").focus();
+};
+
+const createCurrentConditionsDivs = (weatherObj, unit) => {
+  const tempUnit = unit === "imperial" ? "F" : "C";
+  const windUnit = unit === "imperial" ? "mph" : "kph";
+
+  const temp_type =
+    unit === "imperial" ? weatherObj.current.temp_f : weatherObj.current.temp_c;
+  const tempFeelType =
+    unit === "imperial"
+      ? weatherObj.current.feelslike_f
+      : weatherObj.current.feelslike_c;
+  const tempMin =
+    unit === "imperial"
+      ? weatherObj.forecast.forecastday[0].day.mintemp_f
+      : weatherObj.forecast.forecastday[0].day.mintemp_c;
+  const tempMax =
+    unit === "imperial"
+      ? weatherObj.forecast.forecastday[0].day.maxtemp_f
+      : weatherObj.forecast.forecastday[0].day.maxtemp_c;
+
+  const windSpeed =
+    unit === "imperial"
+      ? weatherObj.current.wind_mph
+      : weatherObj.current.wind_kph;
+
+  const icon = createMainImgDiv(
+    weatherObj.current.condition.code,
+    weatherObj.current.condition.text,
+    weatherObj.current.is_day
+  );
+  const temp = createElem("div", "temp", `${Math.round(Number(temp_type))}°${tempUnit}`);
+  const properDescription = toProperCase(weatherObj.current.condition.text);
+  const description = createElem("div", "desc", properDescription);
+  const feels = createElem(
+    "div",
+    "feels",
+    `Feels like ${Math.round(Number(tempFeelType))}°${tempUnit}`
+  );
+  const maxTemp = createElem(
+    "div",
+    "maxtemp",
+    `High ${Math.round(Number(tempMax))}°${tempUnit}`
+  );
+  const minTemp = createElem(
+    "div",
+    "mintemp",
+    `Low ${Math.round(Number(tempMin))}°${tempUnit}`
+  );
+  const humidity = createElem(
+    "div",
+    "humidity",
+    `Humidity ${weatherObj.current.humidity}%`
+  );
+  const wind = createElem(
+    "div",
+    "wind",
+    `Wind ${Math.round(Number(windSpeed))} ${windUnit}`
+  );
+  return [icon, temp, description, feels, maxTemp, minTemp, humidity, wind];
+};
+
+const createMainImgDiv = (icon, altText, isDay) => {
+  const iconDiv = createElem("div", "icon");
+  iconDiv.id = "icon";
+  const faIcon = translateIconToFontAwesome(icon, isDay);
+  faIcon.arialHidden = true;
+  faIcon.title = altText;
+  iconDiv.appendChild(faIcon);
+  return iconDiv;
+};
+
+const createElem = (elemType, divClassName, divText, unit) => {
+  const div = document.createElement(elemType);
+  div.className = divClassName;
+  if (divText) {
+    div.textContent = divText;
+  }
+  if (divClassName === "temp") {
+    const unitDiv = document.createElement("div");
+    unitDiv.classList.add("unit");
+    unitDiv.textContent = unit;
+    div.appendChild(unitDiv);
+  }
+  return div;
+};
+
+const translateIconToFontAwesome = (icon, isDay) => {
+  const i = document.createElement("i");
+  const weatherType = getWeatherClass(icon, isDay);
+  switch (weatherType) {
+    case "day":
+      if (isDay === 1) {
+        i.classList.add("far", "fa-sun");
+      } else {
+        i.classList.add("far", "fa-moon");
+      }
+      break;
+    case "clouds":
+      if (isDay === 1) {
+        i.classList.add("fas", "fa-cloud-sun");
+      } else {
+        i.classList.add("fas", "fa-cloud-moon");
+      }
+      break;
+    case "rain":
+      if (isDay === 1) {
+        i.classList.add("fas", "fa-cloud-sun-rain");
+      } else {
+        i.classList.add("fas", "fa-cloud-moon-rain");
+      }
+      break;
+    case "snow":
+      i.classList.add("far", "fa-snowflake");
+      break;
+    case "fog":
+      i.classList.add("fas", "fa-smog");
+      break;
+    default:
+      i.classList.add("far", "fa-question-circle");
+  }
+  return i;
+};
+
+const displayCurrentConditions = (currentConditionArray) => {
+  const ccContainer = document.getElementById("currentForecast_conditions");
+  currentConditionArray.forEach((cc) => {
+    ccContainer.appendChild(cc);
+  });
+};
+
+const displaySixDayForecast=(weatherJson)=>{
+  for (let i=1;i<=6;i++){
+    const dfArray=createDailyForecastDivs(weatherJson.forecast.forecastday[i]);
+    displayDailyForecast(dfArray);
+  }
+};
+
+const createDailyForecastDivs=(dayWeather)=>{
+  const dayAbbreviationText=getDayAbbreviation(dayWeather.date);
+  const dayAbbreviation=createElem("p","dayAbbreviation",dayAbbreviationText);
+  const dayIcon=createDailyForecastIcon(dayWeather.day.condition);
+  const dayHigh=createElem("p","dayHigh",`${Math.round(Number(unitObj.unit==="imperial"?dayWeather.day.maxtemp_f:dayWeather.day.maxtemp_c))}°${unitObj.unit==="imperial"?"F":"C"}`);
+  const dayLow=createElem("p","dayLow",`${Math.round(Number(unitObj.unit==="imperial"?dayWeather.day.mintemp_f:dayWeather.day.mintemp_c))}°${unitObj.unit==="imperial"?"F":"C"}`);
+  return [dayAbbreviation,dayIcon,dayHigh,dayLow];
 }
 
-const createCurrentConditionsDivs=(weatherObj,unit)=>{
-  const tempUnit=unit==="imperial"?"F":"C";
+const getDayAbbreviation=(date)=>{
+  const dateObj=new Date(date);
+  const dayIndex = dateObj.getDay();
+  const dayNames=["SUN","MON","TUE","WED","THU","FRI","SAT"];
+  return dayNames[dayIndex];
+}
+
+const createDailyForecastIcon=(dayConditionObj)=>{
+  const img=document.createElement("img");
+  if(window.innerWidth<768||window.innerHeight<1025){
+    img.src=`${dayConditionObj.icon}`;
+  }
+  else{
+    img.src=`${dayConditionObj.icon}`;
+    img.height="200%";
+    img.width="200%";
+  }
+  img.alt=dayConditionObj.text;
+  return img;
+
+}
+
+const displayDailyForecast=(dailyArray)=>{
+  const dayDiv=createElem("div","forecastDay");
+  dailyArray.forEach(el=>{
+    dayDiv.appendChild(el);
+  })
+  const dailyForecastContainer=document.getElementById("dailyForecast_contents");
+  dailyForecastContainer.appendChild(dayDiv);
 }
